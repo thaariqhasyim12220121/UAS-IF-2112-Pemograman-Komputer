@@ -77,3 +77,11 @@ def app():
     )
     tahunproduksi0 = tahunproduksi0.drop(['produksi'], axis=1).rename(columns={"name":"Negara", "kode_negara":"Kode Negara", "region":"Region", "sub-region":"Sub Region"})
     st.dataframe(tahunproduksi0)
+    
+    st.markdown(
+        """
+        #### Terimakasih, Salam Thaariq Hasyim @ 2021
+        
+    """
+    )
+    
