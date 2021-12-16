@@ -36,6 +36,7 @@ def app():
 
 
     negaraminyak = df['kode_negara'].unique().tolist()
+    negaraminyak.sort()
     minyak_selection = st.multiselect("Negara:",negaraminyak, default=negaraminyak)
     fil3 =  (df['kode_negara'].isin(minyak_selection))
     df = df[fil3].groupby(by=['kode_negara']).sum()[["produksi"]].sort_values(by='produksi')
