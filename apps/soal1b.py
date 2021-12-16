@@ -1,3 +1,4 @@
+from pandas.core.frame import DataFrame
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -40,6 +41,9 @@ def app():
     by=['produksi'], ascending=False)
     B1 = int(st.number_input("Banyak Negara", min_value=1, max_value=len(df2)))
     df2 = df2.nlargest(B1, columns='produksi')
+    
+    dfn = df2.rename(columns = {'kode_negara':'Negara'}, inplace = True)
+    st.dataframe(dfn)
 
-    bar_chart = px.bar(df2,x='kode_negara',y='produksi')
+    bar_chart = px.bar(df2,x='Negara',y='produksi')
     st.plotly_chart(bar_chart)
