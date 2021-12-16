@@ -43,7 +43,6 @@ def app():
     df2 = df2.nlargest(B1, columns='produksi')
     
     dfn = df2.rename(columns = {'kode_negara':'Negara'}, inplace = True)
-    st.dataframe(dfn)
-
+    
     bar_chart = px.bar(df2,x='Negara',y='produksi')
     st.plotly_chart(bar_chart)
