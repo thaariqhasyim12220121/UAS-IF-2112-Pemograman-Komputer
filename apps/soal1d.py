@@ -1,69 +1,83 @@
-#import & linking json with csv
-    df = pd.read_json("kode_negara_lengkap.json")
-    df_prod = pd.read_csv("produksi_minyak_mentah.csv")
-    df_merge = pd.merge(df_prod,df,left_on='kode_negara',right_on='alpha-3')
-    
-    #sorting
-    list_negara = df_merge["name"].unique().tolist()
-    list_negara.sort()
+from contextlib import nullcontext
+import streamlit as st
+import numpy as np
+import pandas as pd
+from sklearn import datasets
+from logging import basicConfig
+from os import rename
+import numpy as np
+from pandas.core import indexing
+from pandas.core.indexes.base import Index
+import streamlit as st
+import json
+import pandas as pd
+import plotly.express as px
+import json
 
-    #command control streamlit
-    tahun = st.selectbox("Pilih tahun", range(1971, 2016), 44)
+def app():
+    excel_file = 'produksi_minyak_mentah.csv'
 
-    total_produksi = df_merge.groupby(['name', 'kode_negara', 'region', 'sub-region'])['produksi'].sum().reset_index().sort_values(by=['produksi'], ascending=False).reset_index(drop=True)
-    total_produksi_max = total_produksi[(total_produksi["produksi"] > 0)].iloc[0]
-    total_produksi_min = total_produksi[(total_produksi["produksi"] > 0)].iloc[-1]
-    total_produksi_nol = total_produksi[(total_produksi["produksi"] == 0)].sort_values(by=['name']).reset_index(drop=True)
-    total_produksi_nol.index += 1
+    st.write('# Soal 1 D')
 
-    produksi_tahun = df_merge[(df_merge["tahun"] == tahun)][['name', 'kode_negara', 'region', 'sub-region', 'produksi']].sort_values(by=['produksi'], ascending=False).reset_index(drop=True)
-    produksi_tahun_max = produksi_tahun[(produksi_tahun["produksi"] > 0)].iloc[0]
-    produksi_tahun_min = produksi_tahun[(produksi_tahun["produksi"] > 0)].iloc[-1]
-    produksi_tahun_nol = produksi_tahun[(produksi_tahun["produksi"] == 0)].sort_values(by=['name']).reset_index(drop=True)
-    produksi_tahun_nol.index += 1
+    with open('kode_negara_lengkap.json') as f:
+            data = json.load(f)
+            names = dict()
+            region = dict()
+            alpha3 = dict()
+            subregion = dict()
+            namakey = dict()
+            for x in data:
+                country = x['name']
+                idc = x['alpha-3']
+                names[idc] = country
+                alpha3[idc] = x['country-code']
+                region[idc] = x['region']
+                subregion[idc] = x['sub-region']
+                namakey[country] = idc
 
-    
-    st.markdown(
-        f"""
-        #### Negara dengan total produksi keseluruhan tahun terbesar
-        Negara: {total_produksi_max["name"]}\n
-        Kode negara: {total_produksi_max["kode_negara"]}\n
-        Region: {total_produksi_max["region"]}\n
-        Sub-region: {total_produksi_max["sub-region"]}\n
-        Jumlah produksi: {total_produksi_max["produksi"]}\n
-        #### Negara dengan jumlah produksi terbesar pada tahun {tahun}  
-        Negara: {produksi_tahun_max["name"]}\n
-        Kode negara: {produksi_tahun_max["kode_negara"]}\n
-        Region: {produksi_tahun_max["region"]}\n
-        Sub-region: {produksi_tahun_max["sub-region"]}\n
-        Jumlah produksi: {produksi_tahun_max["produksi"]}\n
-        #### Negara dengan total produksi keseluruhan tahun terkecil
-        Negara: {total_produksi_min["name"]}\n
-        Kode negara: {total_produksi_min["kode_negara"]}\n
-        Region: {total_produksi_min["region"]}\n
-        Sub-region: {total_produksi_min["sub-region"]}\n
-        Jumlah produksi: {total_produksi_min["produksi"]}\n
-        #### Negara dengan jumlah produksi terkecil pada tahun {tahun}  
-        Negara: {produksi_tahun_min["name"]}\n
-        Kode negara: {produksi_tahun_min["kode_negara"]}\n
-        Region: {produksi_tahun_min["region"]}\n
-        Sub-region: {produksi_tahun_min["sub-region"]}\n
-        Jumlah produksi: {produksi_tahun_min["produksi"]}\n
-    """
-    )
-    st.markdown(
-        """
-        #### Negara dengan total produksi keseluruhan tahun sama dengan nol
-        
-    """
-    )
-    total_produksi_nol = total_produksi_nol.drop(['produksi'], axis=1).rename(columns={"name":"Negara", "kode_negara":"Kode Negara", "region":"Region", "sub-region":"Sub Region"})
-    st.dataframe(total_produksi_nol)
-    st.markdown(
-        f"""
-        #### Negara dengan jumlah produksi sama dengan nol pada tahun {tahun}
-        
-    """
-    )
-    produksi_tahun_nol = produksi_tahun_nol.drop(['produksi'], axis=1).rename(columns={"name":"Negara", "kode_negara":"Kode Negara", "region":"Region", "sub-region":"Sub Region"})
-    st.dataframe(produksi_tahun_nol)
+
+    df = pd.read_csv(excel_file)
+
+    #OPEN JSON
+    with open("kode_negara_lengkap.json") as f:
+        data = json.load(f)
+
+    #MENGGANTI KODE NEGARA DENGAN NAMA NEGARA LENGKAP
+    konversi = {item['alpha-3'] : item['name'] for item in data}
+    df.loc[:, 'kode_negara'] = df['kode_negara'].map(konversi)
+
+    #MENGHILANGKAN DATA NaN
+    df.dropna(subset=["kode_negara"], inplace=True)
+
+    negaraminyak = df['kode_negara'].unique()
+    minyak_selection = st.selectbox('Pilih :', negaraminyak)
+
+    selectkode = namakey[minyak_selection]
+    st.write("Negara yang dipilih : ",names[selectkode])
+    st.write("Kode Negara : ",alpha3[selectkode])
+    st.write("Region :",region[selectkode])
+    st.write("Sub Region :",subregion[selectkode])
+
+    filterbanyak = df[df.kode_negara== minyak_selection]
+    filterbanyak = filterbanyak.nlargest(1, columns='produksi')
+
+    filtersedikit = df[df.kode_negara== minyak_selection]
+    filtersedikit = filtersedikit.nsmallest(44, columns='produksi')
+    newfilter = filtersedikit.loc[filtersedikit[filtersedikit.produksi > 0].groupby(by='kode_negara')['produksi'].idxmin()]
+    newfilter = newfilter.nsmallest(1, columns='produksi')
+
+
+    seluruhtahun = df[df.kode_negara== minyak_selection]
+
+    st.markdown("<h3 style='text-align: left; color: grey;'>Tahun Terbanyak</h3>", unsafe_allow_html=True)
+    if filterbanyak['produksi'].unique() == 0:
+        st.write('Tidak ada produksi')
+    else:
+        st.dataframe(filterbanyak)
+    st.markdown("<h3 style='text-align: left; color: grey;'>Tahun Tersedikit</h3>", unsafe_allow_html=True)
+    if newfilter.empty:
+        st.write('Tidak ada produksi')
+    else:
+        st.dataframe(newfilter)
+    st.markdown("<h3 style='text-align: left; color: grey;'>Produksi Seluruh Tahun</h3>", unsafe_allow_html=True)
+    st.dataframe(seluruhtahun)
