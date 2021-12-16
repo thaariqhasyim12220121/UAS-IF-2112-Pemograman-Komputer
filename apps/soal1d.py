@@ -50,6 +50,7 @@ def app():
     df.dropna(subset=["kode_negara"], inplace=True)
 
     negaraminyak = df['kode_negara'].unique()
+    negaraminyak.sort()
     minyak_selection = st.selectbox('Pilih :', negaraminyak)
 
     selectkode = namakey[minyak_selection]
